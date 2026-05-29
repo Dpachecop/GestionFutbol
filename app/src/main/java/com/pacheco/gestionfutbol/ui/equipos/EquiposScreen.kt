@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,7 +21,8 @@ import com.pacheco.gestionfutbol.domain.Equipo
 fun EquiposScreen(
     viewModel: EquiposViewModel = viewModel(),
     onLogout: () -> Unit,
-    onNavigateToCreate: () -> Unit // Nuevo callback para ir a crear equipo
+    onNavigateToCreate: () -> Unit,
+    onNavigateToEdit: (Equipo) -> Unit // <-- ESTE ES EL PARÁMETRO QUE FALTABA
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -35,36 +37,29 @@ fun EquiposScreen(
                 }
             )
         },
-        // ¡Agregamos el FAB al estilo Flutter!
         floatingActionButton = {
             FloatingActionButton(onClick = onNavigateToCreate) {
                 Icon(Icons.Default.Add, contentDescription = "Agregar Equipo")
             }
         }
     ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues),
-            contentAlignment = Alignment.Center
-        ) {
+        Box(modifier = Modifier.fillMaxSize().padding(paddingValues), contentAlignment = Alignment.Center) {
             when (uiState) {
                 is EquiposState.Loading -> CircularProgressIndicator()
                 is EquiposState.Success -> {
                     val equipos = (uiState as EquiposState.Success).equipos
-                    if (equipos.isEmpty()) {
-                        Text("No hay equipos registrados.")
-                    } else {
+                    if (equipos.isEmpty()) Text("No hay equipos registrados.")
+                    else {
                         LazyColumn(
                             modifier = Modifier.fillMaxSize(),
                             contentPadding = PaddingValues(16.dp),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             items(equipos) { equipo ->
-                                // Pasamos la función de eliminar a la tarjeta
                                 EquipoItemCard(
                                     equipo = equipo,
-                                    onDeleteClick = { viewModel.deleteEquipo(equipo.id) }
+                                    onDeleteClick = { viewModel.deleteEquipo(equipo.id) },
+                                    onEditClick = { onNavigateToEdit(equipo) } // PASAMOS EL EQUIPO AL CALLBACK
                                 )
                             }
                         }
@@ -84,52 +79,30 @@ fun EquiposScreen(
 }
 
 @Composable
-fun EquipoItemCard(
-    equipo: Equipo,
-    onDeleteClick: () -> Unit // Recibimos el callback aquí
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
+fun EquipoItemCard(equipo: Equipo, onDeleteClick: () -> Unit, onEditClick: () -> Unit) {
+    Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
         Column(modifier = Modifier.padding(16.dp)) {
-            // Usamos un Row para poner el título a la izquierda y el botón de borrar a la derecha
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = equipo.nombreEquipo.uppercase(),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.weight(1f) // Para que no empuje el botón
-                )
-                // Botón de eliminar
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Text(text = equipo.nombreEquipo.uppercase(), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+
+                // Botón de Editar
+                IconButton(onClick = onEditClick) {
+                    Icon(imageVector = Icons.Default.Edit, contentDescription = "Editar", tint = MaterialTheme.colorScheme.primary)
+                }
+                // Botón de Eliminar
                 IconButton(onClick = onDeleteClick) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = "Eliminar",
-                        tint = MaterialTheme.colorScheme.error
-                    )
+                    Icon(imageVector = Icons.Default.Delete, contentDescription = "Eliminar", tint = MaterialTheme.colorScheme.error)
                 }
             }
-
             Text(text = "Eslogan: ${equipo.eslogan}", style = MaterialTheme.typography.bodySmall)
             Spacer(modifier = Modifier.height(8.dp))
-
             Text(text = "Técnico: ${equipo.tecnico}")
             Text(text = "País/Ciudad: ${equipo.pais} - ${equipo.ciudad}")
             Text(text = "Categoría: ${equipo.categoria}")
-
             Spacer(modifier = Modifier.height(8.dp))
-            HorizontalDivider() // Divider moderno en Material 3
+            HorizontalDivider()
             Spacer(modifier = Modifier.height(8.dp))
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text(text = "PJ: ${equipo.partidosJugados}", fontWeight = FontWeight.SemiBold)
                 Text(text = "Goles: ${equipo.goles}", fontWeight = FontWeight.SemiBold)
                 Text(text = "Títulos: ${equipo.campeonatos}", fontWeight = FontWeight.SemiBold)

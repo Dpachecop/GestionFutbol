@@ -48,4 +48,14 @@ class EquiposViewModel : ViewModel() {
             catch (e: Exception) { _uiState.value = EquiposState.Error(e.message ?: "Error") }
         }
     }
+
+    fun updateEquipo(id: String, equipo: Equipo) {
+        viewModelScope.launch {
+            try {
+                api.updateEquipo(id, equipo)
+                fetchEquipos() // Recargamos la lista para ver los cambios
+            }
+            catch (e: Exception) { _uiState.value = EquiposState.Error(e.message ?: "Error al actualizar") }
+        }
+    }
 }

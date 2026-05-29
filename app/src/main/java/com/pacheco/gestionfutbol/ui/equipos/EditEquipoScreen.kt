@@ -13,26 +13,27 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.pacheco.gestionfutbol.domain.Equipo
 
 @Composable
-fun CreateEquipoScreen(
+fun EditEquipoScreen(
+    equipoActual: Equipo,
     viewModel: EquiposViewModel = viewModel(),
     onNavigateBack: () -> Unit
 ) {
-    var nombre by remember { mutableStateOf("") }
-    var eslogan by remember { mutableStateOf("") }
-    var tecnico by remember { mutableStateOf("") }
-    var pais by remember { mutableStateOf("") }
-    var ciudad by remember { mutableStateOf("") }
-    var categoria by remember { mutableStateOf("") }
+    var nombre by remember { mutableStateOf(equipoActual.nombreEquipo) }
+    var eslogan by remember { mutableStateOf(equipoActual.eslogan) }
+    var tecnico by remember { mutableStateOf(equipoActual.tecnico) }
+    var pais by remember { mutableStateOf(equipoActual.pais) }
+    var ciudad by remember { mutableStateOf(equipoActual.ciudad) }
+    var categoria by remember { mutableStateOf(equipoActual.categoria) }
 
-    var goles by remember { mutableStateOf("") }
-    var partidosJugados by remember { mutableStateOf("") }
-    var ganados by remember { mutableStateOf("") }
-    var campeonatos by remember { mutableStateOf("") }
-    var expulsiones by remember { mutableStateOf("") }
-    var empates by remember { mutableStateOf("") }
+    var goles by remember { mutableStateOf(equipoActual.goles.toString()) }
+    var partidosJugados by remember { mutableStateOf(equipoActual.partidosJugados.toString()) }
+    var ganados by remember { mutableStateOf(equipoActual.ganados.toString()) }
+    var campeonatos by remember { mutableStateOf(equipoActual.campeonatos.toString()) }
+    var expulsiones by remember { mutableStateOf(equipoActual.expulsiones.toString()) }
+    var empates by remember { mutableStateOf(equipoActual.empates) }
 
     Column(modifier = Modifier.padding(16.dp).verticalScroll(rememberScrollState())) {
-        Text("Nuevo Equipo", style = MaterialTheme.typography.headlineMedium)
+        Text("Editar Equipo", style = MaterialTheme.typography.headlineMedium)
 
         OutlinedTextField(value = nombre, onValueChange = { nombre = it }, label = { Text("Nombre del Equipo") }, modifier = Modifier.fillMaxWidth())
         OutlinedTextField(value = eslogan, onValueChange = { eslogan = it }, label = { Text("Eslogan") }, modifier = Modifier.fillMaxWidth())
@@ -52,9 +53,7 @@ fun CreateEquipoScreen(
 
         Button(
             onClick = {
-                val nuevoEquipo = Equipo(
-                    id = "",
-                    createdAt = "",
+                val equipoEditado = equipoActual.copy(
                     nombreEquipo = nombre,
                     eslogan = eslogan,
                     tecnico = tecnico,
@@ -68,12 +67,12 @@ fun CreateEquipoScreen(
                     expulsiones = expulsiones.toIntOrNull() ?: 0,
                     empates = empates
                 )
-                viewModel.createEquipo(nuevoEquipo)
+                viewModel.updateEquipo(equipoActual.id, equipoEditado)
                 onNavigateBack()
             },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Guardar Equipo")
+            Text("Actualizar Equipo")
         }
     }
 }
