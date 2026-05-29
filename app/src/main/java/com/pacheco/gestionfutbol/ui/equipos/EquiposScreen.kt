@@ -3,6 +3,9 @@ package com.pacheco.gestionfutbol.ui.equipos
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,11 +19,11 @@ import com.pacheco.gestionfutbol.domain.Equipo
 @Composable
 fun EquiposScreen(
     viewModel: EquiposViewModel = viewModel(),
-    onLogout: () -> Unit // Callback para cerrar sesión
+    onLogout: () -> Unit,
+    onNavigateToCreate: () -> Unit // Nuevo callback para ir a crear equipo
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    // El Scaffold es igual al de Flutter: nos da estructura (Appbar, FAB, Body)
     Scaffold(
         topBar = {
             TopAppBar(
@@ -31,9 +34,14 @@ fun EquiposScreen(
                     }
                 }
             )
+        },
+        // ¡Agregamos el FAB al estilo Flutter!
+        floatingActionButton = {
+            FloatingActionButton(onClick = onNavigateToCreate) {
+                Icon(Icons.Default.Add, contentDescription = "Agregar Equipo")
+            }
         }
     ) { paddingValues ->
-        // Contenedor principal
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -41,23 +49,23 @@ fun EquiposScreen(
             contentAlignment = Alignment.Center
         ) {
             when (uiState) {
-                is EquiposState.Loading -> {
-                    CircularProgressIndicator()
-                }
+                is EquiposState.Loading -> CircularProgressIndicator()
                 is EquiposState.Success -> {
                     val equipos = (uiState as EquiposState.Success).equipos
                     if (equipos.isEmpty()) {
                         Text("No hay equipos registrados.")
                     } else {
-                        // Tu equivalente a ListView.builder
                         LazyColumn(
                             modifier = Modifier.fillMaxSize(),
                             contentPadding = PaddingValues(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp) // Espacio entre tarjetas
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
-                            // Iteramos sobre la lista de equipos
                             items(equipos) { equipo ->
-                                EquipoItemCard(equipo = equipo)
+                                // Pasamos la función de eliminar a la tarjeta
+                                EquipoItemCard(
+                                    equipo = equipo,
+                                    onDeleteClick = { viewModel.deleteEquipo(equipo.id) }
+                                )
                             }
                         }
                     }
@@ -67,9 +75,7 @@ fun EquiposScreen(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("Error: $errorMsg", color = MaterialTheme.colorScheme.error)
                         Spacer(modifier = Modifier.height(16.dp))
-                        Button(onClick = { viewModel.fetchEquipos() }) {
-                            Text("Reintentar")
-                        }
+                        Button(onClick = { viewModel.fetchEquipos() }) { Text("Reintentar") }
                     }
                 }
             }
@@ -77,19 +83,38 @@ fun EquiposScreen(
     }
 }
 
-// Sub-componente para dibujar cada tarjeta de equipo (Tu "ListTile" personalizado)
 @Composable
-fun EquipoItemCard(equipo: Equipo) {
+fun EquipoItemCard(
+    equipo: Equipo,
+    onDeleteClick: () -> Unit // Recibimos el callback aquí
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = equipo.nombreEquipo.uppercase(),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold
-            )
+            // Usamos un Row para poner el título a la izquierda y el botón de borrar a la derecha
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = equipo.nombreEquipo.uppercase(),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f) // Para que no empuje el botón
+                )
+                // Botón de eliminar
+                IconButton(onClick = onDeleteClick) {
+                    Icon(
+                        imageVector = Icons.Default.Delete,
+                        contentDescription = "Eliminar",
+                        tint = MaterialTheme.colorScheme.error
+                    )
+                }
+            }
+
             Text(text = "Eslogan: ${equipo.eslogan}", style = MaterialTheme.typography.bodySmall)
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -98,10 +123,9 @@ fun EquipoItemCard(equipo: Equipo) {
             Text(text = "Categoría: ${equipo.categoria}")
 
             Spacer(modifier = Modifier.height(8.dp))
-            Divider()
+            HorizontalDivider() // Divider moderno en Material 3
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Fila para las estadísticas
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween
